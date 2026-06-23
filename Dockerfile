@@ -18,6 +18,6 @@ ENV SPRING_PROFILES_ACTIVE=prod
 COPY --from=build /app/target/*.jar app.jar
 RUN mkdir -p /app/uploads
 
-EXPOSE 8012
+EXPOSE 8088
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
