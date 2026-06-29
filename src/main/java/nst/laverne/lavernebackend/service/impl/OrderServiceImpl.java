@@ -72,7 +72,6 @@ public class OrderServiceImpl implements OrderService {
             item.setEmoji(product.getEmoji());
             order.addItem(item);
 
-            product.setStock(product.getStock() - quantity);
             subtotal = subtotal.add(product.getPrice().multiply(BigDecimal.valueOf(quantity)));
         }
 
@@ -91,6 +90,27 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDto updateStatus(Long id, OrderStatus status) {
         CustomerOrder order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Commande introuvable"));
+        OrderStatus previous = order.getStatus();
+
+        if (status == OrderStatus.CONFIRMED && previous == OrderStatus.PENDING) {
+            for (OrderItem item : order.getItems()) {
+                Product product = productRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Produit introuvable"));
+                if (product.getStock() < item.getQuantity()) {
+                    throw new BadRequestException("Stock insuffisant pour " + product.getName());
+                }
+                product.setStock(product.getStock() - item.getQuantity());
+            }
+        }
+
+        if (status == OrderStatus.CANCELLED && (previous == OrderStatus.CONFIRMED || previous == OrderStatus.DELIVERED)) {
+            for (OrderItem item : order.getItems()) {
+                Product product = productRepository.findById(item.getProductId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Produit introuvable"));
+                product.setStock(product.getStock() + item.getQuantity());
+            }
+        }
+
         order.setStatus(status);
         return orderMapper.toDto(orderRepository.save(order));
     }
