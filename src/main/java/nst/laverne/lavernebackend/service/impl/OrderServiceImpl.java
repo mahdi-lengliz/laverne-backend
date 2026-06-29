@@ -92,7 +92,7 @@ public class OrderServiceImpl implements OrderService {
         CustomerOrder order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Commande introuvable"));
         OrderStatus previous = order.getStatus();
 
-        if (status == OrderStatus.CONFIRMED && (previous == OrderStatus.PENDING || previous == OrderStatus.CANCELLED)) {
+        if ((status == OrderStatus.CONFIRMED || status == OrderStatus.DELIVERED) && (previous == OrderStatus.PENDING || previous == OrderStatus.CANCELLED)) {
             for (OrderItem item : order.getItems()) {
                 Product product = productRepository.findById(item.getProductId())
                         .orElseThrow(() -> new ResourceNotFoundException("Produit introuvable"));
